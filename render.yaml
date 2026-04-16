@@ -1,0 +1,90 @@
+# Render Blueprint para Codemio Infrastructure
+# Despliega MySQL, Prometheus, Grafana y MySQL Exporter
+
+services:
+  # ============================================
+  # MySQL Database (Private Service)
+  # ============================================
+  - type: pserv
+    name: codemio-mysql
+    env: docker
+    dockerfilePath: ./mysql/Dockerfile
+    region: oregon
+    plan: starter
+    autoDeploy: true
+    envVars:
+      - key: MYSQL_ROOT_PASSWORD
+        generateValue: true
+      - key: MYSQL_DATABASE
+        value: codemio_db
+      - key: MYSQL_USER
+        value: codemio_user
+      - key: MYSQL_PASSWORD
+        generateValue: true
+    disk:
+      name: mysql-data
+      mountPath: /var/lib/mysql
+      sizeGB: 2
+
+  # ============================================
+  # MySQL Exporter (Private Service)
+  # ============================================
+  - type: pserv
+    name: codemio-mysql-exporter
+    env: docker
+    dockerCommand: |
+      --collect.info_schema.tablestats \
+      --collect.info_schema.userstats \
+      --collect.info_schema.query_response_time \
+      --collect.auto_increment.columns \
+      --collect.perf_schema.tableiowaits \
+      --collect.perf_schema.tablelocks
+    image:
+      url: prom/mysqld-exporter:latest
+    region: oregon
+    plan: starter
+    autoDeploy: true
+    envVars:
+      - key: DATA_SOURCE_NAME
+        sync: false
+
+  # ============================================
+  # Prometheus (Private Service)
+  # ============================================
+  - type: pserv
+    name: codemio-prometheus
+    env: docker
+    dockerfilePath: ./prometheus/Dockerfile
+    region: oregon
+    plan: starter
+    autoDeploy: true
+    disk:
+      name: prometheus-data
+      mountPath: /prometheus
+      sizeGB: 1
+
+  # ============================================
+  # Grafana (Web Service - URL Pública)
+  # ============================================
+  - type: web
+    name: codemio-grafana
+    env: docker
+    dockerfilePath: ./grafana/Dockerfile
+    region: oregon
+    plan: starter
+    autoDeploy: true
+    envVars:
+      - key: GRAFANA_ADMIN_USER
+        value: admin
+      - key: GRAFANA_ADMIN_PASSWORD
+        generateValue: true
+      - key: GF_USERS_ALLOW_SIGN_UP
+        value: "false"
+      - key: GF_SERVER_ROOT_URL
+        sync: false
+      - key: GF_INSTALL_PLUGINS
+        value: grafana-clock-panel,grafana-simple-json-datasource
+    disk:
+      name: grafana-data
+      mountPath: /var/lib/grafana
+      sizeGB: 1

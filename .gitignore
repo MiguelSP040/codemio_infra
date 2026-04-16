@@ -1,0 +1,27 @@
+# Secrets y configuraciones sensibles
+secrets/
+*.env
+.env.local
+.env.production
+
+# Backups
+*.sql
+*.tar.gz
+backup/
+
+# Logs
+*.log
+
+# Docker
+.docker/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~

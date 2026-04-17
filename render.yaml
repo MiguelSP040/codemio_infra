@@ -9,9 +9,9 @@ services:
     name: codemio-mysql
     runtime: docker
     dockerfilePath: ./mysql/Dockerfile
+    dockerContext: .
     region: oregon
     plan: starter
-    autoDeploy: true
     envVars:
       - key: MYSQL_ROOT_PASSWORD
         generateValue: true
@@ -32,18 +32,11 @@ services:
   - type: pserv
     name: codemio-mysql-exporter
     runtime: image
-    dockerCommand: >
-      --collect.info_schema.tablestats
-      --collect.info_schema.userstats
-      --collect.info_schema.query_response_time
-      --collect.auto_increment.columns
-      --collect.perf_schema.tableiowaits
-      --collect.perf_schema.tablelocks
+    dockerCommand: "--collect.info_schema.tablestats --collect.info_schema.userstats --collect.info_schema.query_response_time --collect.auto_increment.columns --collect.perf_schema.tableiowaits --collect.perf_schema.tablelocks"
     image:
       url: prom/mysqld-exporter:latest
     region: oregon
     plan: starter
-    autoDeploy: true
     envVars:
       - key: DATA_SOURCE_NAME
         sync: false
@@ -55,9 +48,9 @@ services:
     name: codemio-prometheus
     runtime: docker
     dockerfilePath: ./prometheus/Dockerfile
+    dockerContext: .
     region: oregon
     plan: starter
-    autoDeploy: true
     disk:
       name: prometheus-data
       mountPath: /prometheus
@@ -70,9 +63,9 @@ services:
     name: codemio-grafana
     runtime: docker
     dockerfilePath: ./grafana/Dockerfile
+    dockerContext: .
     region: oregon
     plan: starter
-    autoDeploy: true
     envVars:
       - key: GRAFANA_ADMIN_USER
         value: admin

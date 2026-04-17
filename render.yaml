@@ -7,7 +7,7 @@ services:
   # ============================================
   - type: pserv
     name: codemio-mysql
-    env: docker
+    runtime: docker
     dockerfilePath: ./mysql/Dockerfile
     region: oregon
     plan: starter
@@ -31,13 +31,13 @@ services:
   # ============================================
   - type: pserv
     name: codemio-mysql-exporter
-    env: docker
-    dockerCommand: |
-      --collect.info_schema.tablestats \
-      --collect.info_schema.userstats \
-      --collect.info_schema.query_response_time \
-      --collect.auto_increment.columns \
-      --collect.perf_schema.tableiowaits \
+    runtime: image
+    dockerCommand: >
+      --collect.info_schema.tablestats
+      --collect.info_schema.userstats
+      --collect.info_schema.query_response_time
+      --collect.auto_increment.columns
+      --collect.perf_schema.tableiowaits
       --collect.perf_schema.tablelocks
     image:
       url: prom/mysqld-exporter:latest
@@ -53,7 +53,7 @@ services:
   # ============================================
   - type: pserv
     name: codemio-prometheus
-    env: docker
+    runtime: docker
     dockerfilePath: ./prometheus/Dockerfile
     region: oregon
     plan: starter
@@ -68,7 +68,7 @@ services:
   # ============================================
   - type: web
     name: codemio-grafana
-    env: docker
+    runtime: docker
     dockerfilePath: ./grafana/Dockerfile
     region: oregon
     plan: starter

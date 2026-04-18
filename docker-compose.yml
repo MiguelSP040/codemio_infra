@@ -6,17 +6,17 @@ services:
       context: ./mysql
       dockerfile: Dockerfile
     container_name: codemio-mysql
-    restart: always
+    restart: unless-stopped
     ports:
-      - "${MYSQL_PORT:-3306}:3306"
+      - "3306:3306"
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: ${MYSQL_DATABASE}
       MYSQL_USER: ${MYSQL_USER}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     volumes:
-      - mysql_data:/var/lib/mysql
-      - mysql_config:/etc/mysql/conf.d
+      - ./data/mysql:/var/lib/mysql
+      - ./data/mysql_config:/etc/mysql/conf.d
     networks:
       - codemio-network
     healthcheck:
@@ -24,13 +24,15 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 400M
 
   codemio-mysql-exporter:
     image: prom/mysqld-exporter:latest
     container_name: codemio-mysql-exporter
-    restart: always
-    ports:
-      - "${MYSQL_EXPORTER_PORT:-9104}:9104"
+    restart: unless-stopped
     environment:
       DATA_SOURCE_NAME: "${MYSQL_USER}:${MYSQL_PASSWORD}@(codemio-mysql:3306)/${MYSQL_DATABASE}"
     depends_on:
@@ -45,17 +47,21 @@ services:
       - '--collect.auto_increment.columns'
       - '--collect.perf_schema.tableiowaits'
       - '--collect.perf_schema.tablelocks'
+    deploy:
+      resources:
+        limits:
+          memory: 100M
 
   codemio-prometheus:
     build:
       context: ./prometheus
       dockerfile: Dockerfile
     container_name: codemio-prometheus
-    restart: always
+    restart: unless-stopped
     ports:
-      - "${PROMETHEUS_PORT:-9090}:9090"
+      - "127.0.0.1:9090:9090"
     volumes:
-      - prometheus_data:/prometheus
+      - ./data/prometheus:/prometheus
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
     networks:
       - codemio-network
@@ -67,15 +73,19 @@ services:
       - '--web.console.libraries=/usr/share/prometheus/console_libraries'
       - '--web.console.templates=/usr/share/prometheus/consoles'
       - '--web.enable-lifecycle'
+    deploy:
+      resources:
+        limits:
+          memory: 200M
 
   codemio-grafana:
     build:
       context: ./grafana
       dockerfile: Dockerfile
     container_name: codemio-grafana
-    restart: always
+    restart: unless-stopped
     ports:
-      - "${GRAFANA_PORT:-3000}:3000"
+      - "3000:3000"
     environment:
       GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER}
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
@@ -83,24 +93,18 @@ services:
       GF_SERVER_ROOT_URL: ${GRAFANA_SERVER_ROOT_URL:-http://localhost:3000}
       GF_INSTALL_PLUGINS: grafana-clock-panel,grafana-simple-json-datasource
     volumes:
-      - grafana_data:/var/lib/grafana
+      - ./data/grafana:/var/lib/grafana
       - ./grafana/datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml
       - ./grafana/dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml
     networks:
       - codemio-network
     depends_on:
       - codemio-prometheus
+    deploy:
+      resources:
+        limits:
+          memory: 200M
 
 networks:
   codemio-network:
     driver: bridge
-
-volumes:
-  mysql_data:
-    driver: local
-  mysql_config:
-    driver: local
-  prometheus_data:
-    driver: local
-  grafana_data:
-    driver: local
